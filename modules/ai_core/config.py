@@ -1,7 +1,7 @@
 # modules/ai_core/config.py
 # Model-specific settings and configurations for the AI Core.
 
-DEFAULT_MODEL_NAME = "gemini-2.5-flash" # Or your preferred model like "gemini-1.5-pro"
+DEFAULT_MODEL_NAME = "gemini-1.5-flsh"  # Example
 
 # NEW: System Instruction for Persona
 SYSTEM_INSTRUCTION_TEXT = """

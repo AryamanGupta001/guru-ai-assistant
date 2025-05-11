@@ -61,7 +61,7 @@ class GeminiClient:
 
         try:
             logger.info(f"Sending to Gemini Model ({self.model_name}): stream_enabled={stream}")
-            # logger.debug(f"Final prompt for API: {final_prompt_for_api}") # Can be very verbose
+            logger.debug(f"Final prompt for API: {final_prompt_for_api}") # Can be very verbose
 
             response_iterable = self.model.generate_content(
                 final_prompt_for_api,
@@ -91,7 +91,7 @@ class GeminiClient:
                 if response_obj.prompt_feedback and response_obj.prompt_feedback.block_reason:
                     block_reason_msg = f"{response_obj.prompt_feedback.block_reason.name} - {response_obj.prompt_feedback.block_reason_message}"
                 logger.warning(f"No candidates in response. Blocked due to: {block_reason_msg}")
-                return f"Blocked due to: {block_reason_msg}"
+                yield f"Error: Blocked due to: {block_reason_msg}"
             
             full_text = "".join(part.text for part in response_obj.candidates[0].content.parts if hasattr(part, 'text'))
             if not full_text:
@@ -129,6 +129,18 @@ if __name__ == '__main__':
         print(f"Sending prompt: {sample_prompt_2}")
         response_text_2 = client.generate_response(sample_prompt_2, generation_config={"temperature": 0.8})
         print(f"Gemini Response 2: {response_text_2}")
+
+        # Example usage of streaming response
+        user_message = "Tell me a joke."
+        response_stream = client.generate_response(
+            prompt=user_message,
+            generation_config={"temperature": 0.7},
+            safety_settings=None,  # TEMPORARY DEBUG
+            stream=True
+        )
+        print("Streaming response:")
+        for chunk in response_stream:
+            print(chunk)
 
     except ValueError as ve:
         print(ve)
