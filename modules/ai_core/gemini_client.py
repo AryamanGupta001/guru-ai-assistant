@@ -13,6 +13,28 @@ class GeminiClient:
         self.model = genai.GenerativeModel(model_name)
         print(f"GeminiClient initialized with model: {model_name}")
 
+    def generate_chat_response(self, messages, generation_config=None, safety_settings=None):
+        """
+        Generates a chat response using a list of message history.
+        :param messages: A list of message dicts, e.g.,
+                         [{'role': 'user', 'parts': [{'text': 'Hello'}]},
+                          {'role': 'model', 'parts': [{'text': 'Hi there!'}]}]
+        """
+        try:
+            chat = self.model.start_chat(history=messages[:-1]) # History up to the last user message
+            response = chat.send_message(
+                messages[-1]['parts'][0]['text'], # Send only the latest user message content
+                generation_config=generation_config,
+                safety_settings=safety_settings
+            )
+            # ... (rest of response parsing as before)
+            if response.candidates and response.candidates[0].content and response.candidates[0].content.parts:
+                return "".join(part.text for part in response.candidates[0].content.parts if hasattr(part, 'text'))
+            # ... (error handling)
+        except Exception as e:
+            # ...
+            return str(e)
+        # Handle the case where the response is empty or blocked
     def generate_response(self, prompt, generation_config=None, safety_settings=None):
         """
         Generates a response from the Gemini model.
