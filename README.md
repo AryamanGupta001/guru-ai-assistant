@@ -70,21 +70,48 @@ GURU is a sophisticated voice-activated AI assistant leveraging Google's Gemini 
 
 ```
 guru-ai-assistant/
-├── app.py                  # Main Flask application
-├── config.py               # Configuration settings
-├── requirements.txt        # Python dependencies
-├── .env.example            # Environment variables template
-├── static/                 # Frontend assets
+├── app.py                  # (A) Main Flask application
+├── config.py               # (B) Global configuration settings
+├── requirements.txt        # (C) Python dependencies
+├── .env.example            # (D) Environment variables template
+├── .env                    # (D2) Your actual environment variables (SECRET)
+├── .gitignore              # (E) Tells Git what to ignore
+├── static/                 # (F) Frontend assets (served directly by the web server)
 │   ├── css/                # Stylesheets
-│   ├── js/                 # JavaScript files
-│   └── images/             # Images and icons
-├── templates/              # HTML templates
-├── modules/
+│   │   └── style.css       # (F1) Basic styling for the web page
+│   ├── js/                 # JavaScript files for frontend interactivity
+│   │   ├── main.js         # (F2) Core frontend JavaScript for chat
+│   │   ├── voice_ui.js     # (F3) Placeholder for voice interaction controls
+│   │   └── animation.js    # (F4) Placeholder for visual feedback
+│   └── images/             # (F5) Images and icons (currently empty)
+├── templates/              # (G) HTML templates (rendered by Flask)
+│   └── index.html          # (G1) The main web page structure
+├── modules/                # (H) Backend Python modules for core logic
+│   ├── __init__.py         # Makes 'modules' a Python package
 │   ├── ai_core/            # Gemini API integration & NLP logic
+│   │   ├── __init__.py     # Makes 'ai_core' a Python package
+│   │   ├── gemini_client.py # (H1) Interacts directly with the Google Gemini API
+│   │   ├── processor.py    # (H2) Formats prompts for Gemini, parses responses
+│   │   └── config.py       # (H3) Model-specific settings (temperature, safety)
 │   ├── voice_interface/    # Speech recognition and synthesis
+│   │   ├── __init__.py
+│   │   ├── recognition.py  # (H4) Speech-to-Text (STT)
+│   │   ├── synthesis.py    # (H5) Text-to-Speech (TTS)
+│   │   └── activation.py   # (H6) Wake word detection
 │   ├── sentiment/          # Sentiment analysis engine
+│   │   ├── __init__.py
+│   │   ├── analyzer.py     # (H7) Detects sentiment from text
+│   │   ├── response_modifier.py # (H8) Adapts AI responses based on sentiment
+│   │   └── training.py     # (H9) For training custom sentiment models (if used)
 │   └── context/            # Conversation context management
-└── tests/                  # Test suite
+│       ├── __init__.py
+│       ├── history.py      # (H10) Manages recent conversation history
+│       ├── memory.py       # (H11) For long-term storage of important facts
+│       └── retrieval.py    # (H12) Fetches relevant context for the AI
+└── tests/                  # (I) Test suite for automated testing
+    ├── __init__.py
+    ├── test_app.py         # (I1) Tests for app.py
+    └── test_*.py           # (I2) Tests for each module
 ```
 
 ## 🧩 Component Details
