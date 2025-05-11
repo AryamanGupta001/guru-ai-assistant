@@ -1,7 +1,7 @@
 # modules/ai_core/config.py
 # Model-specific settings and configurations for the AI Core.
 
-DEFAULT_MODEL_NAME = "gemini-2.0-flash" # Or your preferred model like "gemini-1.5-pro"
+DEFAULT_MODEL_NAME = "gemini-2.5-flash" # Or your preferred model like "gemini-1.5-pro"
 
 # NEW: System Instruction for Persona
 SYSTEM_INSTRUCTION_TEXT = """
@@ -16,7 +16,7 @@ Be ready to assist with a wide range of tasks, from brainstorming and learning t
 """
 
 DEFAULT_GENERATION_CONFIG = {
-    "temperature": 0.75, # Slightly higher for more creative/witty responses
+    "temperature": 0.9, # Slightly higher for more creative/witty responses
     "top_p": 0.95,
     "top_k": 40,
     "max_output_tokens": 2048,
