@@ -5,30 +5,29 @@ class AIProcessor:
     def __init__(self):
         print("AIProcessor initialized.")
 
-    def format_prompt(self, user_query, conversation_history=None, context_data=None):
-        """
-        Formats the user query and any relevant context into a suitable prompt
-        for the AI model.
-        """
-        prompt = user_query
+    def format_prompt(self, user_query, conversation_history=None, context_data=None, system_instruction=None):
+        # ... (keep existing logic, or adjust if system_instruction is prepended here for certain models)
+        prompt = user_query # Base
+        
+        # This is a simplified history injection. For Gemini chat models, 
+        # you'd typically build a list of {'role': 'user'/'model', 'parts': [{'text': ...}]}
         if conversation_history:
-            # Example: Prepend some history (simplified)
-            history_str = "\n".join([f"{msg['role']}: {msg['content']}" for msg in conversation_history[-3:]]) # Last 3 turns
-            prompt = f"Conversation History:\n{history_str}\n\nUser: {user_query}"
+            history_str = "\\n".join([f"{msg['role']}: {msg['content']}" for msg in conversation_history[-5:]]) # Last 5 turns
+            prompt = f"Conversation History:\\n{history_str}\\n\\nUser: {user_query}"
         
         if context_data:
-            # Example: Add retrieved context
-            prompt += f"\n\nRelevant Information: {context_data}"
+            prompt += f"\\n\\nRelevant Information: {context_data}"
+        
+        # If the model expects system instruction as part of the main prompt:
+        # if system_instruction:
+        #     prompt = f"{system_instruction}\\n\\n{prompt}"
             
         return prompt
 
     def parse_response(self, ai_raw_response):
-        """
-        Parses the raw response from the AI model into a user-friendly format.
-        Can also handle extracting structured data if the model is prompted for it.
-        """
-        # For now, assuming ai_raw_response is a simple string
         cleaned_response = ai_raw_response.strip()
+        # Fallback to remove asterisks if the model still uses them despite instructions
+        cleaned_response = cleaned_response.replace('*', '')
         return cleaned_response
 
 if __name__ == '__main__':

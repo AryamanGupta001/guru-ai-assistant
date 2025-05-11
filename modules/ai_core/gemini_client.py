@@ -1,84 +1,75 @@
 # modules/ai_core/gemini_client.py
 import os
 import google.generativeai as genai
+from .config import SYSTEM_INSTRUCTION_TEXT # Import the persona
 
 class GeminiClient:
-    def __init__(self, api_key=None, model_name="gemini-pro"):
+    def __init__(self, api_key=None, model_name="gemini-pro", system_instruction=SYSTEM_INSTRUCTION_TEXT): # Add system_instruction
         if api_key is None:
             api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
             raise ValueError("GEMINI_API_KEY not found in environment or provided.")
         
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel(model_name)
-        print(f"GeminiClient initialized with model: {model_name}")
+        # Pass system_instruction if the model supports it (e.g., gemini-1.5-pro)
+        # For older models or if passing differently, you might need to include it in the 'prompt' to generate_content
+        try:
+            self.model = genai.GenerativeModel(
+                model_name,
+                system_instruction=system_instruction # Pass it here
+            )
+            print(f"GeminiClient initialized with model: {model_name} and system instruction.")
+        except Exception as e: # Catch potential errors if model doesn't support system_instruction directly
+            print(f"Warning: Could not set system_instruction directly for model {model_name} ({e}). Will try prepending to prompt if necessary.")
+            self.model = genai.GenerativeModel(model_name)
+            self.system_instruction_fallback = system_instruction # Store for fallback
 
-    def generate_chat_response(self, messages, generation_config=None, safety_settings=None):
-        """
-        Generates a chat response using a list of message history.
-        :param messages: A list of message dicts, e.g.,
-                         [{'role': 'user', 'parts': [{'text': 'Hello'}]},
-                          {'role': 'model', 'parts': [{'text': 'Hi there!'}]}]
-        """
+    def generate_response(self, prompt, generation_config=None, safety_settings=None, stream=False): # Added stream
         try:
-            chat = self.model.start_chat(history=messages[:-1]) # History up to the last user message
-            response = chat.send_message(
-                messages[-1]['parts'][0]['text'], # Send only the latest user message content
-                generation_config=generation_config,
-                safety_settings=safety_settings
-            )
-            # ... (rest of response parsing as before)
-            if response.candidates and response.candidates[0].content and response.candidates[0].content.parts:
-                return "".join(part.text for part in response.candidates[0].content.parts if hasattr(part, 'text'))
-            # ... (error handling)
-        except Exception as e:
-            # ...
-            return str(e)
-        # Handle the case where the response is empty or blocked
-    def generate_response(self, prompt, generation_config=None, safety_settings=None):
-        """
-        Generates a response from the Gemini model.
-        :param prompt: The input prompt string.
-        :param generation_config: Optional. A dictionary for generation configuration.
-                                  e.g., {"temperature": 0.7, "top_p": 1, "top_k": 1, "max_output_tokens": 2048}
-        :param safety_settings: Optional. A list of safety setting dictionaries.
-                                e.g., [{"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"}]
-        :return: The generated text response or an error message.
-        """
-        try:
-            # Default config if none provided
-            config = generation_config if generation_config else genai.types.GenerationConfig(
-                candidate_count=1,
-                # Add other defaults here if needed e.g. temperature=0.9
-            )
-            
+            final_prompt = prompt
+            # Fallback if system_instruction wasn't set in __init__ (older models)
+            # This is a simple prepend; more sophisticated structuring might be needed for chat models
+            if hasattr(self, 'system_instruction_fallback') and self.system_instruction_fallback:
+                 if isinstance(prompt, str):
+                    final_prompt = f"{self.system_instruction_fallback}\n\nUser: {prompt}\nAssistant:"
+                 # If prompt is a list of messages for chat, prepend system message differently
+                 # elif isinstance(prompt, list):
+                 #     # This needs careful construction based on Gemini's chat message format
+                 #     pass
+
 
             response = self.model.generate_content(
-                prompt,
-                generation_config=config,
-                safety_settings=safety_settings
+                final_prompt, # Use the potentially modified prompt
+                generation_config=generation_config,
+                safety_settings=safety_settings,
+                stream=stream # Enable streaming
             )
             
-            # Check for empty candidates or safety blocks
+            if stream:
+                return response # Return the generator object for streaming
+
+            # ... (rest of your existing non-streaming response parsing logic)
             if not response.candidates:
                 if response.prompt_feedback.block_reason:
                     return f"Blocked due to: {response.prompt_feedback.block_reason_message}"
                 return "No response generated. The prompt might have been blocked or resulted in empty candidates."
 
-            # Accessing text, ensuring parts exist
             if response.candidates[0].content and response.candidates[0].content.parts:
                 return "".join(part.text for part in response.candidates[0].content.parts if hasattr(part, 'text'))
             else:
-                # Handle cases where the response might be blocked or empty in a different way
                 finish_reason = response.candidates[0].finish_reason
-                if finish_reason != 1 : # 1 usually means "STOP" (successful)
+                if finish_reason != 1 : 
                      return f"Generation failed or was blocked. Finish Reason: {finish_reason.name}"
                 return "Received an empty or non-text response part."
 
         except Exception as e:
             print(f"Error during Gemini API call: {e}")
-            return f"Error generating response: {str(e)}"
-
+            # If streaming, we can't return an error string like this easily.
+            # The Flask route will need to handle stream errors.
+            if stream:
+                yield f"Error: {str(e)}" # Yield an error chunk
+            else:
+                return f"Error generating response: {str(e)}"
 if __name__ == '__main__':
     # This is for basic testing of the client
     # Ensure your GEMINI_API_KEY is set in your .env file or environment
