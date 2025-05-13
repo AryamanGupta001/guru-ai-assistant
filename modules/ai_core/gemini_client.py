@@ -32,6 +32,11 @@ class GeminiClient:
             self.list_available_models()  # Log available models
             self.model = genai.GenerativeModel(model_name)
             self.model_supports_system_instruction_directly = False
+        except Exception as e:
+            logger.error(f"Error initializing model '{model_name}': {e}")
+            logger.info("Fetching available models for debugging...")
+            self.list_available_models()  # Log available models
+            raise
 
     def generate_response(self, prompt, generation_config=None, safety_settings=None, stream=False):
         final_prompt_for_api = prompt
@@ -110,17 +115,19 @@ class GeminiClient:
             if stream: yield f"Error_API_Call: {str(e)}" # Yield an error chunk
             else: return f"Error_API_Call: {str(e)}"
 
-    # Add this function to the GeminiClient class or as a standalone utility
-    def list_available_models():
+    def list_available_models(self):
         try:
             from google.generativeai import models
             available_models = models.list_models()
             logger.info("Available models:")
             for model in available_models:
-                logger.info(f"Model ID: {model.model_id}, Supported Methods: {model.supported_generation_methods}")
+                # Dynamically log all attributes of the model object
+                logger.info(f"Model: {model}")
+                print(f"Model: {model}")
             return available_models
         except Exception as e:
             logger.error(f"Error fetching available models: {e}")
+            print(f"Error fetching available models: {e}")
             return []
 
 # ... (rest of the file, including if __name__ == '__main__')
@@ -132,11 +139,16 @@ if __name__ == '__main__':
 
     try:
         client = GeminiClient()
+        print("Listing available models:")
+        available_models = client.list_available_models()
+        for model in available_models:
+            print(f"Model ID: {model.model_id}, Supported Methods: {model.supported_generation_methods}")
+
         sample_prompt = "Hello Gemini, what can you do?"
         print(f"Sending prompt: {sample_prompt}")
         response_text = client.generate_response(sample_prompt)
         print(f"Gemini Response: {response_text}")
-        
+
         sample_prompt_2 = "Write a short story about a friendly robot."
         print(f"Sending prompt: {sample_prompt_2}")
         response_text_2 = client.generate_response(sample_prompt_2, generation_config={"temperature": 0.8})
@@ -152,7 +164,12 @@ if __name__ == '__main__':
         )
         print("Streaming response:")
         for chunk in response_stream:
-            print(chunk)
+            if hasattr(chunk, 'result') and chunk.result.candidates:
+                for candidate in chunk.result.candidates:
+                    for part in candidate.content.parts:
+                        print(part.text, end="")
+            else:
+                print(chunk)
 
     except ValueError as ve:
         print(ve)
