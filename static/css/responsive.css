@@ -1,0 +1,35 @@
+/* static/css/responsive.css */
+@media (max-width: 768px) {
+    .chat-container {
+        height: 90vh; /* More height on smaller screens */
+        padding: 15px;
+    }
+
+    h1 {
+        font-size: 1.8rem;
+        margin-bottom: 20px;
+    }
+
+    #chat-output div {
+        padding: 6px 10px;
+        font-size: 0.9rem;
+    }
+
+    #message-input, #chat-form button {
+        font-size: 0.9rem;
+        padding: 10px 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    #chat-form {
+        flex-direction: column; /* Stack input and button on very small screens */
+    }
+    #message-input {
+        border-radius: 20px; /* Full round when stacked */
+        margin-bottom: 10px;
+    }
+    #chat-form button {
+        border-radius: 20px; /* Full round when stacked */
+    }
+}

@@ -5,25 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GURU AI Assistant</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <!-- Add responsive.css if you create it -->
-    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}"> -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
 </head>
 <body>
     <div class="chat-container">
         <h1>Welcome to GURU AI</h1>
         <div id="chat-output" style="height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
-            <!-- Chat messages will appear here -->
+            <!-- GURU's initial welcome message will be injected here by JS -->
         </div>
         <form id="chat-form">
-            <input type="text" id="message-input" placeholder="Type your message..." style="width: 80%; padding: 8px;">
+            <input type="text" id="message-input" placeholder="Ask me anything, or tell me what you're working on..." style="width: 80%; padding: 8px;">
             <button type="submit" style="padding: 8px;">Send</button>
         </form>
-        <!-- Placeholder for voice interaction button -->
-        <!-- <button id="voice-button">Speak</button> -->
     </div>
 
+    <!-- Pass initial message to JavaScript -->
+    <script>
+        const initialGuruMessage = "{{ initial_message|safe }}";
+    </script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-    <!-- <script src="{{ url_for('static', filename='js/voice_ui.js') }}"></script> -->
-    <!-- <script src="{{ url_for('static', filename='js/animation.js') }}"></script> -->
 </body>
 </html>

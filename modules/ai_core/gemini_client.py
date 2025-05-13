@@ -7,7 +7,7 @@ import logging # Add logging
 logger = logging.getLogger(__name__)
 
 class GeminiClient:
-    def __init__(self, api_key=None, model_name="gemini-pro", system_instruction=SYSTEM_INSTRUCTION_TEXT):
+    def __init__(self, api_key=None, model_name="gemini-2.0-flash", system_instruction=SYSTEM_INSTRUCTION_TEXT):
         if api_key is None:
             api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
@@ -20,18 +20,18 @@ class GeminiClient:
         self.model_supports_system_instruction_directly = False
 
         try:
-            # Attempt to initialize with system_instruction
             self.model = genai.GenerativeModel(
                 model_name,
                 system_instruction=self.system_instruction_text
             )
             self.model_supports_system_instruction_directly = True
             logger.info(f"GeminiClient initialized model '{model_name}' directly WITH system instruction.")
-        except (TypeError, ValueError) as e: # More specific exceptions
-            logger.warning(f"Model '{model_name}' might not support 'system_instruction' parameter directly in constructor ({e}). Initializing without it and will prepend if needed.")
+        except (TypeError, ValueError) as e:
+            logger.warning(f"Model '{model_name}' might not support 'system_instruction' parameter directly in constructor ({e}).")
+            logger.info("Fetching available models for debugging...")
+            self.list_available_models()  # Log available models
             self.model = genai.GenerativeModel(model_name)
             self.model_supports_system_instruction_directly = False
-
 
     def generate_response(self, prompt, generation_config=None, safety_settings=None, stream=False):
         final_prompt_for_api = prompt
@@ -57,7 +57,6 @@ class GeminiClient:
         elif not self.model_supports_system_instruction_directly and isinstance(prompt, str) and self.system_instruction_text:
             logger.info("Prepending system instruction to string prompt for model.")
             final_prompt_for_api = f"[SYSTEM GUIDANCE]:\n{self.system_instruction_text}\n\nUser: {prompt}\nAssistant:"
-
 
         try:
             logger.info(f"Sending to Gemini Model ({self.model_name}): stream_enabled={stream}")
@@ -110,6 +109,19 @@ class GeminiClient:
             logger.error(f"Unexpected error during Gemini API call: {e}")
             if stream: yield f"Error_API_Call: {str(e)}" # Yield an error chunk
             else: return f"Error_API_Call: {str(e)}"
+
+    # Add this function to the GeminiClient class or as a standalone utility
+    def list_available_models():
+        try:
+            from google.generativeai import models
+            available_models = models.list_models()
+            logger.info("Available models:")
+            for model in available_models:
+                logger.info(f"Model ID: {model.model_id}, Supported Methods: {model.supported_generation_methods}")
+            return available_models
+        except Exception as e:
+            logger.error(f"Error fetching available models: {e}")
+            return []
 
 # ... (rest of the file, including if __name__ == '__main__')
 if __name__ == '__main__':
